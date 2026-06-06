@@ -540,7 +540,6 @@
         body.size-r .entry-title { font-size: 1.65rem; font-weight: 400; }
 
         body.size-n .entry-meta { font-size: 0.7rem; }
-        body.size-l .entry-meta { font-size: 0.82rem; color: #cbd5e1; }
         body.size-r .entry-meta { font-size: 0.98rem; color: #f1f5f9; font-weight: 400; opacity: 0.8; }
 
         @media (max-width: 480px) {
@@ -553,7 +552,6 @@
             body.size-r .entry-title { font-size: 1.7rem; font-weight: 400; }
 
             body.size-n .entry-meta { font-size: 0.72rem; }
-            body.size-l .entry-meta { font-size: 0.85rem; color: #cbd5e1; }
             body.size-r .entry-meta { font-size: 1.02rem; color: #f1f5f9; font-weight: 400; opacity: 0.8; }
         }
         .search-input::placeholder {
@@ -17657,4 +17655,136 @@
             }
 
             if (numBooks > 0) {
-                bookSelecto
+                bookSelector.classList.add('active');
+                
+                const allBtn = document.createElement('span');
+                allBtn.className = 'book-opt active';
+                allBtn.textContent = 'ALL';
+                allBtn.onclick = () => selectBook(0, allBtn);
+                bookButtons.appendChild(allBtn);
+                
+                for (let i = 1; i <= numBooks; i++) {
+                    const separator = document.createElement('span');
+                    separator.textContent = " \u00b7 ";
+                    separator.style.color = 'var(--text-muted)';
+                    bookButtons.appendChild(separator);
+
+                    const btn = document.createElement('span');
+                    btn.className = 'book-opt';
+                    btn.textContent = `${i}`;
+                    btn.onclick = () => selectBook(i, btn);
+                    bookButtons.appendChild(btn);
+                }
+            } else {
+                bookSelector.classList.remove('active');
+            }
+        }
+
+        function selectBook(bookNum, element) {
+            activeBook = bookNum;
+            bookButtons.querySelectorAll('.book-opt').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            
+            triggerReshuffle();
+        }
+
+        window.handleSearch = function(e) {
+            searchQuery = e.target.value;
+            renderFeed();
+        };
+
+        function showToast(message) {
+            toastEl.textContent = message;
+            toastEl.classList.add('show');
+            setTimeout(() => {
+                toastEl.classList.remove('show');
+            }, 2500);
+        }
+
+        window.exportBookmarks = function() {
+            const bookmarkedItems = database.entries.filter(item => bookmarks.includes(item.id));
+            if (bookmarkedItems.length === 0) {
+                alert("You don't have any bookmarks to export.");
+                return;
+            }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bookmarkedItems, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `stoic_reader_bookmarks_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast("Exported bookmarks!");
+        };
+
+        let activeFootnoteLink = null;
+        
+        function setupFootnoteListeners() {
+            document.addEventListener('click', (e) => {
+                const link = e.target.closest('a[href^="#discourses-b"], a[href^="#enchiridion-fn-"]');
+                if (link) {
+                    e.preventDefault();
+                    
+                    const fnId = link.getAttribute('href').substring(1);
+                    const fnText = database.footnotes[fnId];
+                    
+                    if (fnText) {
+                        showFootnoteTooltip(link, fnText);
+                    }
+                    return;
+                }
+                
+                if (tooltipEl.style.display === 'block' && !e.target.closest('#footnote-tooltip')) {
+                    hideFootnoteTooltip();
+                }
+            });
+        }
+
+        function showFootnoteTooltip(link, text) {
+            activeFootnoteLink = link;
+            tooltipEl.innerHTML = `
+                <div class="tooltip-header">
+                    <span>TRANSLATION NOTE</span>
+                    <button class="tooltip-close" onclick="hideFootnoteTooltip()" aria-label="Close tooltip">&times;</button>
+                </div>
+                <div class="tooltip-body">${text}</div>
+            `;
+            
+            const rect = link.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+            
+            tooltipEl.style.display = 'block';
+            
+            let tooltipTop = rect.bottom + scrollTop + 8;
+            let tooltipLeft = rect.left + scrollLeft - 120;
+            
+            tooltipEl.style.top = tooltipTop + 'px';
+            tooltipEl.style.left = tooltipLeft + 'px';
+            
+            setTimeout(() => {
+                const tooltipRect = tooltipEl.getBoundingClientRect();
+                
+                if (tooltipRect.right > window.innerWidth) {
+                    tooltipEl.style.left = (window.innerWidth - tooltipRect.width - 16) + 'px';
+                }
+                if (tooltipRect.left < 0) {
+                    tooltipEl.style.left = '16px';
+                }
+                
+                if (tooltipRect.bottom > window.innerHeight + scrollTop) {
+                    tooltipEl.style.top = (rect.top + scrollTop - tooltipRect.height - 8) + 'px';
+                }
+                
+                tooltipEl.style.opacity = '1';
+            }, 50);
+        }
+
+        window.hideFootnoteTooltip = function() {
+            tooltipEl.style.display = 'none';
+        };
+
+        init();
+    </script>
+</body>
+</html>
