@@ -13,9 +13,9 @@
     <style>
         :root {
             --bg-color: #000000;
-            --text-primary: #f8fafc;
-            --text-muted: #64748b;
-            --border-color: #1e293b;
+            --text-primary: #ffffff;      /* Pure white for maximum contrast */
+            --text-muted: #94a3b8;        /* Brighter gray for high contrast */
+            --border-color: #334155;      /* Slate 700 (brighter divider line) */
             --accent: #ffffff;
             --bookmark-color: #fbbf24;
             --font-serif: 'Playfair Display', Georgia, serif;
@@ -255,7 +255,7 @@
         .entry-title {
             font-family: var(--font-serif);
             font-size: 1.25rem;
-            font-weight: 500;
+            font-weight: 400;
             margin: 0 0 10px 0;
             line-height: 1.3;
             letter-spacing: -0.01em;
@@ -363,23 +363,57 @@
         .action-item {
             cursor: pointer;
             color: var(--text-muted);
-            transition: color 0.2s;
+            transition: color 0.2s, transform 0.1s ease;
             display: flex;
             align-items: center;
+            background: none;
+            border: none;
+            padding: 0;
+            outline: none;
         }
 
         .action-item svg {
             width: 14px;
             height: 14px;
             fill: currentColor;
+            display: block;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .action-item:hover {
             color: var(--accent);
         }
 
+        .action-item:active svg {
+            transform: scale(0.8);
+        }
+
         .action-item.bookmarked {
             color: var(--bookmark-color);
+        }
+
+        /* SVG Toggle between Outline and Filled path */
+        .action-item .bookmark-filled {
+            display: none;
+        }
+        .action-item .bookmark-outline {
+            display: block;
+        }
+        .action-item.bookmarked .bookmark-filled {
+            display: block;
+        }
+        .action-item.bookmarked .bookmark-outline {
+            display: none;
+        }
+
+        @keyframes bookmarkPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.35); }
+            100% { transform: scale(1); }
+        }
+
+        .action-item.bookmarked svg {
+            animation: bookmarkPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .toast {
@@ -497,22 +531,34 @@
         }
 
         /* Typography size overrides */
-        body.size-s .entry-text { font-size: 0.85rem; line-height: 1.6; }
-        body.size-m .entry-text { font-size: 0.92rem; line-height: 1.65; }
-        body.size-l .entry-text { font-size: 1.05rem; line-height: 1.75; }
+        body.size-n .entry-text { font-size: 0.92rem; line-height: 1.65; }
+        body.size-l .entry-text { font-size: 1.08rem; line-height: 1.75; }
+        body.size-r .entry-text { font-size: 1.28rem; line-height: 1.85; font-weight: 500; letter-spacing: 0.015em; }
 
-        body.size-s .entry-title { font-size: 1.15rem; }
-        body.size-m .entry-title { font-size: 1.25rem; }
-        body.size-l .entry-title { font-size: 1.4rem; }
+        body.size-n .entry-title { font-size: 1.25rem; }
+        body.size-l .entry-title { font-size: 1.45rem; }
+        body.size-r .entry-title { font-size: 1.65rem; font-weight: 400; }
+
+        body.size-n .entry-meta { font-size: 0.7rem; }
+        body.size-l .entry-meta { font-size: 0.82rem; color: #cbd5e1; }
+        body.size-r .entry-meta { font-size: 0.98rem; color: #f1f5f9; font-weight: 400; opacity: 0.8; }
 
         @media (max-width: 480px) {
-            body.size-s .entry-text { font-size: 0.9rem; line-height: 1.65; }
-            body.size-m .entry-text { font-size: 0.98rem; line-height: 1.7; }
-            body.size-l .entry-text { font-size: 1.12rem; line-height: 1.8; }
+            body.size-n .entry-text { font-size: 0.98rem; line-height: 1.7; }
+            body.size-l .entry-text { font-size: 1.14rem; line-height: 1.8; }
+            body.size-r .entry-text { font-size: 1.34rem; line-height: 1.9; font-weight: 500; letter-spacing: 0.02em; }
 
-            body.size-s .entry-title { font-size: 1.2rem; }
-            body.size-m .entry-title { font-size: 1.3rem; }
-            body.size-l .entry-title { font-size: 1.45rem; }
+            body.size-n .entry-title { font-size: 1.3rem; }
+            body.size-l .entry-title { font-size: 1.5rem; }
+            body.size-r .entry-title { font-size: 1.7rem; font-weight: 400; }
+
+            body.size-n .entry-meta { font-size: 0.72rem; }
+            body.size-l .entry-meta { font-size: 0.85rem; color: #cbd5e1; }
+            body.size-r .entry-meta { font-size: 1.02rem; color: #f1f5f9; font-weight: 400; opacity: 0.8; }
+        }
+        .search-input::placeholder {
+            color: var(--text-muted);
+            opacity: 1;
         }
     </style>
 </head>
@@ -534,9 +580,9 @@
 
         <div class="size-row">
             <span class="size-label">SIZE:</span>
-            <span class="size-opt" id="size-s" onclick="setTextSize('s')">Small</span>
-            <span class="size-opt" id="size-m" onclick="setTextSize('m')">Normal</span>
-            <span class="size-opt" id="size-l" onclick="setTextSize('l')">Large</span>
+            <span class="size-opt" id="size-n" onclick="setTextSize('n')">Small</span>
+            <span class="size-opt" id="size-l" onclick="setTextSize('l')">Medium</span>
+            <span class="size-opt" id="size-r" onclick="setTextSize('r')">Large</span>
         </div>
 
         <div class="source-row">
@@ -2377,7 +2423,202 @@
       "paragraphs": [
         {
           "tag": "p",
-          "html": "<p>Things have no hold on the soul. They have no access to it, cannot move or direct it. It is moved and directed by itself alone. It takes the things before it and interprets them as it sees fit.</p>\n        <p>&#35; <strong id=\"book5-20\">5.20</strong> In a sense, people are our proper occupation. Our job is to do them good and put up with them.</p>\n        <p>But when they obstruct our proper tasks, they become irrelevant to us&mdash;like sun, wind, animals. <mark title=\"The Daily Stoic: June 30th\">Our actions may be impeded by them, but there can be no impeding our intentions or our dispositions. Because we can accommodate and adapt. The mind adapts and converts to its own purposes the obstacle to our acting.</mark></p>\n        <p><mark title=\"The Daily Stoic: June 30th\">The impediment to action advances action.</mark></p>\n        <p><mark title=\"The Daily Stoic: June 30th\">What stands in the way becomes the way.</mark></p>\n        <p>&#35; <strong id=\"book5-21\">5.21</strong> Honor that which is greatest in the world&mdash;that on whose business all things are employed and by whom they are governed.</p>\n        <p>And honor what is greatest in yourself: the part that shares its nature with that power. All things&mdash;in you as well&mdash;are employed about its business, and your life is governed by it.</p>\n        <p>&#35; <strong id=\"book5-22\">5.22</strong> If it does not harm the community, it does not harm its members.</p>\n        <p>When you think you’ve been injured, apply this rule: If the community isn’t injured by it, neither am I. And if it is, anger is not the answer. Show the offender where he went wrong.</p>\n        <p>&#35; <strong id=\"book5-23\">5.23</strong> <mark title=\"The Daily Stoic: November 15th\">Keep in mind how fast things pass by and are gone&mdash;those that are now, and those to come. Existence flows past us like a river: the “what” is in constant flux, the “why” has a thousand variations. Nothing is stable, not even what’s right here.</mark> The infinity of past and future gapes before us&mdash;a chasm whose depths we cannot see.</p>\n        <p>So it would take an idiot to feel self-importance or distress. Or any indignation, either. As if the things that irritate us lasted.</p>\n        <p>&#35; <strong id=\"book5-24\">5.24</strong> <mark title=\"The Daily Stoic: December 19th\">Remember:</mark></p>\n        <p><mark title=\"The Daily Stoic: December 19th\">Matter. How tiny your share of it.</mark></p>\n        <p><mark title=\"The Daily Stoic: December 19th\">Time. How brief and fleeting your allotment of it.</mark></p>\n        <p><mark title=\"The Daily Stoic: December 19th\">Fate. How small a role you play in it.</mark></p>\n        <p>&#35; <strong id=\"book5-25\">5.25</strong> So other people hurt me? That’s their problem. Their character and actions are not mine. What is done to me is ordained by nature, what I do by my own.</p>\n        <p>&#35; <strong id=\"book5-26\">5.26</strong> The mind is the ruler of the soul. It should remain unstirred by agitations of the flesh&mdash;gentle and violent ones alike. Not mingling with them, but fencing itself off and keeping those feelings in their place. When they make their way into your thoughts, through the sympathetic link between mind and body, don’t try to resist the sensation. The sensation is natural. But don’t let the mind start in with judgments, calling it “good” or “bad.”</p>\n        <p>&#35; <strong id=\"book5-27\">5.27</strong> “To live with the gods.” And to do that is to show them that your soul accepts what it is given and does what the spirit requires&mdash;the spirit God gave each of us to lead and guide us, a fragment of himself. Which is our mind, our <em>logos</em>.</p>\n        <p>&#35; <strong id=\"book5-28\">5.28</strong> <mark title=\"The Daily Stoic: October 14th\">Don’t be irritated at people’s smell or bad breath. What’s the point? With that mouth, with those armpits, they’re going to produce that odor.</mark></p>\n        <p><mark title=\"The Daily Stoic: October 14th\">&mdash;But they have a brain! Can’t they figure it out? Can’t they recognize the problem?</mark></p>\n        <p><mark title=\"The Daily Stoic: October 14th\">So you have a brain as well. Good for you. Then use your logic to awaken his. Show him. Make him realize it. If he’ll listen, then you’ll have solved the problem. Without anger.</mark></p>\n        <p>&#35; <strong id=\"book5-28a\">5.28a</strong> Neither player-king nor prostitute.</p>\n        <p>&#35; <strong id=\"book5-29\">5.29</strong> You can live here as you expect to live there.</p>\n        <p>And if they won’t let you, you can depart life now and forfeit nothing. If the smoke makes me cough, I can leave. What’s so hard about that?</p>\n        <p>Until things reach that point, I’m free. No one can keep me from doing what I want. And I want what is proper to rational beings, living together.</p>\n        <p>&#35; <strong id=\"book5-30\">5.30</strong> The world’s intelligence is not selfish.</p>\n        <p>It created lower things for the sake of higher ones, and attuned the higher ones to one another. Look how it subordinates, how it connects, how it assigns each thing what each deserves, and brings the better things into alignment.</p>\n        <p>&#35; <strong id=\"book5-31\">5.31</strong> How have you behaved to the gods, to your parents, to your siblings, to your wife, to your children, to your teachers, to your nurses, to your friends, to your relatives, to your slaves? Have they all had from you nothing “wrong and unworthy, either word or deed”?</p>\n        <p>Consider all that you’ve gone through, all that you’ve survived. And that the story of your life is done, your assignment complete. How many good things have you seen? How much pain and pleasure have you resisted? How many honors have you declined? How many unkind people have you been kind to?</p>"
+          "html": "<p>Things have no hold on the soul. They have no access to it, cannot move or direct it. It is moved and directed by itself alone. It takes the things before it and interprets them as it sees fit.</p>"
+        }
+      ]
+    },
+    {
+      "id": "meditations-5-5.20",
+      "source": "meditations",
+      "sourceTitle": "Meditations",
+      "author": "Marcus Aurelius",
+      "book": 5,
+      "section": "5.20",
+      "title": null,
+      "paragraphs": [
+        {
+          "tag": "p",
+          "html": "<p>In a sense, people are our proper occupation. Our job is to do them good and put up with them.</p>\n        <p>But when they obstruct our proper tasks, they become irrelevant to us&mdash;like sun, wind, animals. <mark title=\"The Daily Stoic: June 30th\">Our actions may be impeded by them, but there can be no impeding our intentions or our dispositions. Because we can accommodate and adapt. The mind adapts and converts to its own purposes the obstacle to our acting.</mark></p>\n        <p><mark title=\"The Daily Stoic: June 30th\">The impediment to action advances action.</mark></p>\n        <p><mark title=\"The Daily Stoic: June 30th\">What stands in the way becomes the way.</mark></p>"
+        }
+      ]
+    },
+    {
+      "id": "meditations-5-5.21",
+      "source": "meditations",
+      "sourceTitle": "Meditations",
+      "author": "Marcus Aurelius",
+      "book": 5,
+      "section": "5.21",
+      "title": null,
+      "paragraphs": [
+        {
+          "tag": "p",
+          "html": "<p>Honor that which is greatest in the world&mdash;that on whose business all things are employed and by whom they are governed.</p>\n        <p>And honor what is greatest in yourself: the part that shares its nature with that power. All things&mdash;in you as well&mdash;are employed about its business, and your life is governed by it.</p>"
+        }
+      ]
+    },
+    {
+      "id": "meditations-5-5.22",
+      "source": "meditations",
+      "sourceTitle": "Meditations",
+      "author": "Marcus Aurelius",
+      "book": 5,
+      "section": "5.22",
+      "title": null,
+      "paragraphs": [
+        {
+          "tag": "p",
+          "html": "<p>If it does not harm the community, it does not harm its members.</p>\n        <p>When you think you’ve been injured, apply this rule: If the community isn’t injured by it, neither am I. And if it is, anger is not the answer. Show the offender where he went wrong.</p>"
+        }
+      ]
+    },
+    {
+      "id": "meditations-5-5.23",
+      "source": "meditations",
+      "sourceTitle": "Meditations",
+      "author": "Marcus Aurelius",
+      "book": 5,
+      "section": "5.23",
+      "title": null,
+      "paragraphs": [
+        {
+          "tag": "p",
+          "html": "<p><mark title=\"The Daily Stoic: November 15th\">Keep in mind how fast things pass by and are gone&mdash;those that are now, and those to come. Existence flows past us like a river: the “what” is in constant flux, the “why” has a thousand variations. Nothing is stable, not even what’s right here.</mark> The infinity of past and future gapes before us&mdash;a chasm whose depths we cannot see.</p>\n        <p>So it would take an idiot to feel self-importance or distress. Or any indignation, either. As if the things that irritate us lasted.</p>"
+        }
+      ]
+    },
+    {
+      "id": "meditations-5-5.24",
+      "source": "meditations",
+      "sourceTitle": "Meditations",
+      "author": "Marcus Aurelius",
+      "book": 5,
+      "section": "5.24",
+      "title": null,
+      "paragraphs": [
+        {
+          "tag": "p",
+          "html": "<p><mark title=\"The Daily Stoic: December 19th\">Remember:</mark></p>\n        <p><mark title=\"The Daily Stoic: December 19th\">Matter. How tiny your share of it.</mark></p>\n        <p><mark title=\"The Daily Stoic: December 19th\">Time. How brief and fleeting your allotment of it.</mark></p>\n        <p><mark title=\"The Daily Stoic: December 19th\">Fate. How small a role you play in it.</mark></p>"
+        }
+      ]
+    },
+    {
+      "id": "meditations-5-5.25",
+      "source": "meditations",
+      "sourceTitle": "Meditations",
+      "author": "Marcus Aurelius",
+      "book": 5,
+      "section": "5.25",
+      "title": null,
+      "paragraphs": [
+        {
+          "tag": "p",
+          "html": "<p>So other people hurt me? That’s their problem. Their character and actions are not mine. What is done to me is ordained by nature, what I do by my own.</p>"
+        }
+      ]
+    },
+    {
+      "id": "meditations-5-5.26",
+      "source": "meditations",
+      "sourceTitle": "Meditations",
+      "author": "Marcus Aurelius",
+      "book": 5,
+      "section": "5.26",
+      "title": null,
+      "paragraphs": [
+        {
+          "tag": "p",
+          "html": "<p>The mind is the ruler of the soul. It should remain unstirred by agitations of the flesh&mdash;gentle and violent ones alike. Not mingling with them, but fencing itself off and keeping those feelings in their place. When they make their way into your thoughts, through the sympathetic link between mind and body, don’t try to resist the sensation. The sensation is natural. But don’t let the mind start in with judgments, calling it “good” or “bad.”</p>"
+        }
+      ]
+    },
+    {
+      "id": "meditations-5-5.27",
+      "source": "meditations",
+      "sourceTitle": "Meditations",
+      "author": "Marcus Aurelius",
+      "book": 5,
+      "section": "5.27",
+      "title": null,
+      "paragraphs": [
+        {
+          "tag": "p",
+          "html": "<p>“To live with the gods.” And to do that is to show them that your soul accepts what it is given and does what the spirit requires&mdash;the spirit God gave each of us to lead and guide us, a fragment of himself. Which is our mind, our <em>logos</em>.</p>"
+        }
+      ]
+    },
+    {
+      "id": "meditations-5-5.28",
+      "source": "meditations",
+      "sourceTitle": "Meditations",
+      "author": "Marcus Aurelius",
+      "book": 5,
+      "section": "5.28",
+      "title": null,
+      "paragraphs": [
+        {
+          "tag": "p",
+          "html": "<p><mark title=\"The Daily Stoic: October 14th\">Don’t be irritated at people’s smell or bad breath. What’s the point? With that mouth, with those armpits, they’re going to produce that odor.</mark></p>\n        <p><mark title=\"The Daily Stoic: October 14th\">&mdash;But they have a brain! Can’t they figure it out? Can’t they recognize the problem?</mark></p>\n        <p><mark title=\"The Daily Stoic: October 14th\">So you have a brain as well. Good for you. Then use your logic to awaken his. Show him. Make him realize it. If he’ll listen, then you’ll have solved the problem. Without anger.</mark></p>"
+        }
+      ]
+    },
+    {
+      "id": "meditations-5-5.28a",
+      "source": "meditations",
+      "sourceTitle": "Meditations",
+      "author": "Marcus Aurelius",
+      "book": 5,
+      "section": "5.28a",
+      "title": null,
+      "paragraphs": [
+        {
+          "tag": "p",
+          "html": "<p>Neither player-king nor prostitute.</p>"
+        }
+      ]
+    },
+    {
+      "id": "meditations-5-5.29",
+      "source": "meditations",
+      "sourceTitle": "Meditations",
+      "author": "Marcus Aurelius",
+      "book": 5,
+      "section": "5.29",
+      "title": null,
+      "paragraphs": [
+        {
+          "tag": "p",
+          "html": "<p>You can live here as you expect to live there.</p>\n        <p>And if they won’t let you, you can depart life now and forfeit nothing. If the smoke makes me cough, I can leave. What’s so hard about that?</p>\n        <p>Until things reach that point, I’m free. No one can keep me from doing what I want. And I want what is proper to rational beings, living together.</p>"
+        }
+      ]
+    },
+    {
+      "id": "meditations-5-5.30",
+      "source": "meditations",
+      "sourceTitle": "Meditations",
+      "author": "Marcus Aurelius",
+      "book": 5,
+      "section": "5.30",
+      "title": null,
+      "paragraphs": [
+        {
+          "tag": "p",
+          "html": "<p>The world’s intelligence is not selfish.</p>\n        <p>It created lower things for the sake of higher ones, and attuned the higher ones to one another. Look how it subordinates, how it connects, how it assigns each thing what each deserves, and brings the better things into alignment.</p>"
+        }
+      ]
+    },
+    {
+      "id": "meditations-5-5.31",
+      "source": "meditations",
+      "sourceTitle": "Meditations",
+      "author": "Marcus Aurelius",
+      "book": 5,
+      "section": "5.31",
+      "title": null,
+      "paragraphs": [
+        {
+          "tag": "p",
+          "html": "<p>How have you behaved to the gods, to your parents, to your siblings, to your wife, to your children, to your teachers, to your nurses, to your friends, to your relatives, to your slaves? Have they all had from you nothing “wrong and unworthy, either word or deed”?</p>\n        <p>Consider all that you’ve gone through, all that you’ve survived. And that the story of your life is done, your assignment complete. How many good things have you seen? How much pain and pleasure have you resisted? How many honors have you declined? How many unkind people have you been kind to?</p>"
         }
       ]
     },
@@ -17146,7 +17387,7 @@
         };
 
         function init() {
-            const storedSize = localStorage.getItem('stoic_text_size') || 'm';
+            const storedSize = localStorage.getItem('stoic_text_size') || 'n';
             setTextSize(storedSize);
             const stored = localStorage.getItem('stoic_bookmarks');
             if (stored) {
@@ -17293,7 +17534,8 @@
                     <div class="entry-actions">
                         <button class="${bookmarkClass}" onclick="toggleBookmark('${item.id}', this)" aria-label="Bookmark entry" style="background:none; border:none; padding:0; outline:none; color:inherit;">
                             <svg viewBox="0 0 24 24">
-                                <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15l-5-2.18L7 18V5h10v13z"/>
+                                <path class="bookmark-outline" d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15l-5-2.18L7 18V5h10v13z"/>
+                                <path class="bookmark-filled" d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
                             </svg>
                         </button>
                         <button class="action-item" onclick="shareEntry(this, '${item.author} - ${item.sourceTitle} ${item.section}')" aria-label="Share entry" style="background:none; border:none; padding:0; outline:none; color:inherit; margin-left: 14px;">
@@ -17356,7 +17598,7 @@
             const titleNode = entryNode.querySelector('.entry-title');
             const titleText = titleNode ? `"${titleNode.innerText}"\n` : '';
             
-            const shareText = `"${titleText}${paragraphs.join('\n\n')}"\n\n� ${label}`;
+            const shareText = `"${titleText}${paragraphs.join('\n\n')}"\n\n\u00b7 ${label}`;
             
             navigator.clipboard.writeText(shareText).then(() => {
                 showToast("Copied to clipboard!");
@@ -17415,136 +17657,4 @@
             }
 
             if (numBooks > 0) {
-                bookSelector.classList.add('active');
-                
-                const allBtn = document.createElement('span');
-                allBtn.className = 'book-opt active';
-                allBtn.textContent = 'ALL';
-                allBtn.onclick = () => selectBook(0, allBtn);
-                bookButtons.appendChild(allBtn);
-                
-                for (let i = 1; i <= numBooks; i++) {
-                    const separator = document.createElement('span');
-                    separator.textContent = " \u00b7 ";
-                    separator.style.color = 'var(--text-muted)';
-                    bookButtons.appendChild(separator);
-
-                    const btn = document.createElement('span');
-                    btn.className = 'book-opt';
-                    btn.textContent = `${i}`;
-                    btn.onclick = () => selectBook(i, btn);
-                    bookButtons.appendChild(btn);
-                }
-            } else {
-                bookSelector.classList.remove('active');
-            }
-        }
-
-        function selectBook(bookNum, element) {
-            activeBook = bookNum;
-            bookButtons.querySelectorAll('.book-opt').forEach(btn => btn.classList.remove('active'));
-            element.classList.add('active');
-            
-            triggerReshuffle();
-        }
-
-        window.handleSearch = function(e) {
-            searchQuery = e.target.value;
-            renderFeed();
-        };
-
-        function showToast(message) {
-            toastEl.textContent = message;
-            toastEl.classList.add('show');
-            setTimeout(() => {
-                toastEl.classList.remove('show');
-            }, 2500);
-        }
-
-        window.exportBookmarks = function() {
-            const bookmarkedItems = database.entries.filter(item => bookmarks.includes(item.id));
-            if (bookmarkedItems.length === 0) {
-                alert("You don't have any bookmarks to export.");
-                return;
-            }
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bookmarkedItems, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `stoic_reader_bookmarks_${new Date().toISOString().slice(0,10)}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-            showToast("Exported bookmarks!");
-        };
-
-        let activeFootnoteLink = null;
-        
-        function setupFootnoteListeners() {
-            document.addEventListener('click', (e) => {
-                const link = e.target.closest('a[href^="#discourses-b"], a[href^="#enchiridion-fn-"]');
-                if (link) {
-                    e.preventDefault();
-                    
-                    const fnId = link.getAttribute('href').substring(1);
-                    const fnText = database.footnotes[fnId];
-                    
-                    if (fnText) {
-                        showFootnoteTooltip(link, fnText);
-                    }
-                    return;
-                }
-                
-                if (tooltipEl.style.display === 'block' && !e.target.closest('#footnote-tooltip')) {
-                    hideFootnoteTooltip();
-                }
-            });
-        }
-
-        function showFootnoteTooltip(link, text) {
-            activeFootnoteLink = link;
-            tooltipEl.innerHTML = `
-                <div class="tooltip-header">
-                    <span>TRANSLATION NOTE</span>
-                    <button class="tooltip-close" onclick="hideFootnoteTooltip()" aria-label="Close tooltip">&times;</button>
-                </div>
-                <div class="tooltip-body">${text}</div>
-            `;
-            
-            const rect = link.getBoundingClientRect();
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-            
-            tooltipEl.style.display = 'block';
-            
-            let tooltipTop = rect.bottom + scrollTop + 8;
-            let tooltipLeft = rect.left + scrollLeft - 120;
-            
-            tooltipEl.style.top = tooltipTop + 'px';
-            tooltipEl.style.left = tooltipLeft + 'px';
-            
-            setTimeout(() => {
-                const tooltipRect = tooltipEl.getBoundingClientRect();
-                
-                if (tooltipRect.right > window.innerWidth) {
-                    tooltipEl.style.left = (window.innerWidth - tooltipRect.width - 16) + 'px';
-                }
-                if (tooltipRect.left < 0) {
-                    tooltipEl.style.left = '16px';
-                }
-                
-                if (tooltipRect.bottom > window.innerHeight + scrollTop) {
-                    tooltipEl.style.top = (rect.top + scrollTop - tooltipRect.height - 8) + 'px';
-                }
-                
-                tooltipEl.style.opacity = '1';
-            }, 50);
-        }
-
-        window.hideFootnoteTooltip = function() {
-            tooltipEl.style.display = 'none';
-        };
-
-        init();
-    </script>
-</body>
-</html>
+                bookSelecto
