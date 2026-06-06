@@ -464,6 +464,56 @@
             to { opacity: 1; transform: translateY(0); }
         }
         mark { background: transparent; color: inherit; padding: 0; }
+        .size-row {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 15px;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            align-items: center;
+        }
+
+        .size-label {
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+
+        .size-opt {
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s;
+            user-select: none;
+            text-transform: uppercase;
+            padding: 4px 2px;
+        }
+
+        .size-opt:hover {
+            color: var(--text-primary);
+        }
+
+        .size-opt.active {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Typography size overrides */
+        body.size-s .entry-text { font-size: 0.85rem; line-height: 1.6; }
+        body.size-m .entry-text { font-size: 0.92rem; line-height: 1.65; }
+        body.size-l .entry-text { font-size: 1.05rem; line-height: 1.75; }
+
+        body.size-s .entry-title { font-size: 1.15rem; }
+        body.size-m .entry-title { font-size: 1.25rem; }
+        body.size-l .entry-title { font-size: 1.4rem; }
+
+        @media (max-width: 480px) {
+            body.size-s .entry-text { font-size: 0.9rem; line-height: 1.65; }
+            body.size-m .entry-text { font-size: 0.98rem; line-height: 1.7; }
+            body.size-l .entry-text { font-size: 1.12rem; line-height: 1.8; }
+
+            body.size-s .entry-title { font-size: 1.2rem; }
+            body.size-m .entry-title { font-size: 1.3rem; }
+            body.size-l .entry-title { font-size: 1.45rem; }
+        }
     </style>
 </head>
 <body>
@@ -480,6 +530,13 @@
                 <span class="action-opt" id="btn-reshuffle" onclick="triggerReshuffle()" style="margin-left: 10px;">Reshuffle</span>
                 <span class="action-opt" id="btn-export" onclick="exportBookmarks()" style="display: none; margin-left: 10px;">Export</span>
             </div>
+        </div>
+
+        <div class="size-row">
+            <span class="size-label">SIZE:</span>
+            <span class="size-opt" id="size-s" onclick="setTextSize('s')">Small</span>
+            <span class="size-opt" id="size-m" onclick="setTextSize('m')">Normal</span>
+            <span class="size-opt" id="size-l" onclick="setTextSize('l')">Large</span>
         </div>
 
         <div class="source-row">
@@ -17080,7 +17137,17 @@
         const btnReshuffle = document.getElementById('btn-reshuffle');
         const btnExport = document.getElementById('btn-export');
 
+        window.setTextSize = function(size) {
+            document.body.className = `size-${size}`;
+            document.querySelectorAll('.size-opt').forEach(opt => opt.classList.remove('active'));
+            const element = document.getElementById(`size-${size}`);
+            if (element) element.classList.add('active');
+            localStorage.setItem('stoic_text_size', size);
+        };
+
         function init() {
+            const storedSize = localStorage.getItem('stoic_text_size') || 'm';
+            setTextSize(storedSize);
             const stored = localStorage.getItem('stoic_bookmarks');
             if (stored) {
                 try {
