@@ -17409,7 +17409,8 @@
         const btnExport = document.getElementById('btn-export');
 
         window.setTextSize = function(size) {
-            document.body.className = `size-${size}`;
+            document.body.classList.remove('size-n', 'size-l', 'size-r');
+            document.body.classList.add(`size-${size}`);
             document.querySelectorAll('.size-opt').forEach(opt => opt.classList.remove('active'));
             const element = document.getElementById(`size-${size}`);
             if (element) element.classList.add('active');
