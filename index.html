@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="A singular portal to read the core Stoic texts: Marcus Aurelius's Meditations, Epictetus's Discourses, and the Enchiridion. In order or shuffled.">
-    <title>Stoic Feed</title>
+    <title>Stoic Scroll</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,6 +20,40 @@
             --bookmark-color: #fbbf24;
             --font-serif: 'Playfair Display', Georgia, serif;
             --font-sans: 'Inter', -apple-system, sans-serif;
+        }
+
+        body.light-mode {
+            --bg-color: #f8fafc;          /* Slate 50 */
+            --text-primary: #0f172a;      /* Slate 900 */
+            --text-muted: #64748b;        /* Slate 500 */
+            --border-color: #e2e8f0;      /* Slate 200 */
+            --accent: #0f172a;            /* Slate 900 */
+            --bookmark-color: #d97706;    /* Amber 600 */
+        }
+
+        body.light-mode #footnote-tooltip {
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-mode.size-r .entry-meta {
+            color: var(--text-muted);
+            opacity: 1;
+        }
+
+        .app-header {
+            margin-top: 10px;
+            margin-bottom: 25px;
+        }
+
+        .app-header h1 {
+            font-family: var(--font-serif);
+            font-size: 2.5rem;
+            font-weight: 500;
+            margin: 0;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+            text-align: center;
         }
 
         * {
@@ -55,11 +89,18 @@
             margin-bottom: 20px;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 15px;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none;
+        }
+        .nav-row::-webkit-scrollbar {
+            display: none;
         }
 
         .filter-bar {
             display: flex;
             gap: 15px;
+            flex-shrink: 0;
         }
 
         .filter-opt, .action-opt {
@@ -87,6 +128,7 @@
             display: flex;
             gap: 14px;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .source-row {
@@ -181,17 +223,6 @@
         }
 
         @media (max-width: 480px) {
-            .nav-row {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-                padding-bottom: 12px;
-            }
-            .action-bar {
-                width: 100%;
-                justify-content: flex-start;
-                gap: 12px;
-            }
             .entry-text {
                 font-size: 0.98rem;
                 line-height: 1.7;
@@ -562,6 +593,10 @@
 </head>
 <body>
     <div class="container">
+        <header class="app-header">
+            <h1 id="header-title">Stoic Scroll</h1>
+        </header>
+
         <div class="nav-row">
             <div class="filter-bar">
                 <span class="filter-opt active" id="filter-all" onclick="setBookmarkFilter('all')">Feed</span>
@@ -569,10 +604,9 @@
             </div>
 
             <div class="action-bar">
-                <span class="filter-opt active" id="btn-shuffle" onclick="setReadMode('shuffle')">Shuffle</span>
-                <span class="filter-opt" id="btn-order" onclick="setReadMode('order')">Order</span>
-                <span class="action-opt" id="btn-reshuffle" onclick="triggerReshuffle()" style="margin-left: 10px;">Reshuffle</span>
-                <span class="action-opt" id="btn-export" onclick="exportBookmarks()" style="display: none; margin-left: 10px;">Export</span>
+                <span class="filter-opt" id="btn-shuffle" onclick="handleShuffleClick()">Shuffle</span>
+                <span class="action-opt" id="btn-export" onclick="exportBookmarks()" style="display: none;">Export</span>
+                <span class="action-opt" id="theme-toggle" onclick="toggleTheme()">Light Mode</span>
             </div>
         </div>
 
@@ -17372,8 +17406,6 @@
         const tooltipEl = document.getElementById('footnote-tooltip');
         
         const btnShuffle = document.getElementById('btn-shuffle');
-        const btnOrder = document.getElementById('btn-order');
-        const btnReshuffle = document.getElementById('btn-reshuffle');
         const btnExport = document.getElementById('btn-export');
 
         window.setTextSize = function(size) {
@@ -17385,6 +17417,17 @@
         };
 
         function init() {
+            // Load theme preference
+            const storedTheme = localStorage.getItem('stoic_theme');
+            const systemPrefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+            if (storedTheme === 'light' || (!storedTheme && systemPrefersLight)) {
+                document.body.classList.add('light-mode');
+                const themeBtn = document.getElementById('theme-toggle');
+                if (themeBtn) {
+                    themeBtn.textContent = 'Dark Mode';
+                }
+            }
+
             const storedSize = localStorage.getItem('stoic_text_size') || 'n';
             setTextSize(storedSize);
             const stored = localStorage.getItem('stoic_bookmarks');
@@ -17395,11 +17438,18 @@
                     bookmarks = [];
                 }
             }
-            triggerReshuffle();
+            setSource(activeSource);
             setupFootnoteListeners();
         }
 
         function triggerReshuffle() {
+            activeMode = 'shuffle';
+            if (activeSource !== 'all') {
+                btnShuffle.classList.add('active');
+            } else {
+                btnShuffle.classList.remove('active');
+            }
+
             const currentFiltered = getFilteredEntries();
             shuffledEntries = shuffleArray([...currentFiltered]);
             renderFeed();
@@ -17607,7 +17657,7 @@
 
         window.setBookmarkFilter = function(filterType) {
             activeFilter = filterType;
-            document.querySelectorAll('.filter-opt').forEach(opt => opt.classList.remove('active'));
+            document.querySelectorAll('.filter-bar .filter-opt').forEach(opt => opt.classList.remove('active'));
             document.getElementById(`filter-${filterType}`).classList.add('active');
             
             if (filterType === 'bookmarked') {
@@ -17623,14 +17673,33 @@
             activeMode = mode;
             if (mode === 'shuffle') {
                 btnShuffle.classList.add('active');
-                btnOrder.classList.remove('active');
-                btnReshuffle.style.display = 'inline-block';
             } else {
                 btnShuffle.classList.remove('active');
-                btnOrder.classList.add('active');
-                btnReshuffle.style.display = 'none';
             }
             renderFeed();
+        };
+
+        window.handleShuffleClick = function() {
+            if (activeSource === 'all') {
+                triggerReshuffle();
+            } else {
+                if (activeMode === 'shuffle') {
+                    setReadMode('order');
+                } else {
+                    activeMode = 'shuffle';
+                    triggerReshuffle();
+                }
+            }
+        };
+
+        window.toggleTheme = function() {
+            const isLight = document.body.classList.toggle('light-mode');
+            localStorage.setItem('stoic_theme', isLight ? 'light' : 'dark');
+            
+            const themeBtn = document.getElementById('theme-toggle');
+            if (themeBtn) {
+                themeBtn.textContent = isLight ? 'Dark Mode' : 'Light Mode';
+            }
         };
 
         window.setSource = function(source) {
@@ -17639,9 +17708,33 @@
 
             document.querySelectorAll('.source-opt').forEach(pill => pill.classList.remove('active'));
             document.getElementById(`source-${source}`).classList.add('active');
+
+            // Update header title
+            const headerTitle = document.getElementById('header-title');
+            if (source === 'all') {
+                headerTitle.textContent = 'Stoic Scroll';
+            } else {
+                const sourceNames = {
+                    'meditations': 'Meditations',
+                    'discourses': 'Discourses',
+                    'enchiridion': 'Enchiridion'
+                };
+                headerTitle.textContent = sourceNames[source] || 'Stoic Scroll';
+            }
             
-            buildBookSelector();
-            triggerReshuffle();
+            const btnShuffle = document.getElementById('btn-shuffle');
+
+            if (source === 'all') {
+                btnShuffle.classList.remove('active');
+                activeMode = 'shuffle';
+                buildBookSelector();
+                triggerReshuffle();
+            } else {
+                activeMode = 'order'; // Off by default for specific texts
+                btnShuffle.classList.remove('active');
+                buildBookSelector();
+                renderFeed(); // Render in order by default
+            }
         };
 
         function buildBookSelector() {
@@ -17685,7 +17778,11 @@
             bookButtons.querySelectorAll('.book-opt').forEach(btn => btn.classList.remove('active'));
             element.classList.add('active');
             
-            triggerReshuffle();
+            if (activeMode === 'shuffle') {
+                triggerReshuffle();
+            } else {
+                renderFeed();
+            }
         }
 
         window.handleSearch = function(e) {
