@@ -133,15 +133,15 @@
 
         .source-row {
             display: flex;
-            gap: 14px;
-            margin-bottom: 15px;
-            font-size: 0.75rem;
-            letter-spacing: 0.05em;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-size: 0.7rem;
+            letter-spacing: 0.03em;
             overflow-x: auto;
             white-space: nowrap;
             scrollbar-width: none;
             align-items: center;
-            padding-bottom: 4px;
+            padding: 4px 0;
         }
         .source-row::-webkit-scrollbar {
             display: none;
@@ -149,36 +149,50 @@
 
         .source-label {
             color: var(--text-muted);
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            margin-right: 6px;
+            letter-spacing: 0.05em;
             flex-shrink: 0;
         }
 
         .source-opt {
             color: var(--text-muted);
             cursor: pointer;
-            transition: color 0.2s;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             user-select: none;
             text-transform: uppercase;
             flex-shrink: 0;
-            padding: 4px 2px;
+            padding: 5px 12px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .source-opt:hover {
             color: var(--text-primary);
+            border-color: var(--text-muted);
         }
 
         .source-opt.active {
-            color: var(--text-primary);
+            background-color: var(--text-primary);
+            color: var(--bg-color);
+            border-color: var(--text-primary);
             font-weight: 600;
         }
 
         .book-row {
             display: none;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 16px;
-            font-size: 0.72rem;
-            letter-spacing: 0.05em;
+            font-size: 0.7rem;
+            letter-spacing: 0.03em;
             align-items: center;
+            padding: 4px 0;
         }
 
         .book-row.active {
@@ -187,7 +201,11 @@
 
         .book-label {
             color: var(--text-muted);
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            margin-right: 6px;
+            letter-spacing: 0.05em;
             flex-shrink: 0;
         }
 
@@ -206,19 +224,28 @@
         .book-opt {
             color: var(--text-muted);
             cursor: pointer;
-            transition: color 0.2s;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             user-select: none;
             text-transform: uppercase;
             flex-shrink: 0;
-            padding: 4px 2px;
+            padding: 5px 12px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .book-opt:hover {
             color: var(--text-primary);
+            border-color: var(--text-muted);
         }
 
         .book-opt.active {
-            color: var(--text-primary);
+            background-color: var(--text-primary);
+            color: var(--bg-color);
+            border-color: var(--text-primary);
             font-weight: 600;
         }
 
@@ -531,33 +558,52 @@
         mark { background: transparent; color: inherit; padding: 0; }
         .size-row {
             display: flex;
-            gap: 14px;
-            margin-bottom: 15px;
-            font-size: 0.75rem;
-            letter-spacing: 0.05em;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-size: 0.7rem;
+            letter-spacing: 0.03em;
             align-items: center;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none;
+            padding: 4px 0;
         }
 
         .size-label {
             color: var(--text-muted);
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            margin-right: 6px;
+            letter-spacing: 0.05em;
+            flex-shrink: 0;
         }
 
         .size-opt {
             color: var(--text-muted);
             cursor: pointer;
-            transition: color 0.2s;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             user-select: none;
             text-transform: uppercase;
-            padding: 4px 2px;
+            flex-shrink: 0;
+            padding: 5px 12px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .size-opt:hover {
             color: var(--text-primary);
+            border-color: var(--text-muted);
         }
 
         .size-opt.active {
-            color: var(--text-primary);
+            background-color: var(--text-primary);
+            color: var(--bg-color);
+            border-color: var(--text-primary);
             font-weight: 600;
         }
 
@@ -17420,12 +17466,17 @@
         function init() {
             // Load theme preference
             const storedTheme = localStorage.getItem('stoic_theme');
-            const systemPrefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-            if (storedTheme === 'light' || (!storedTheme && systemPrefersLight)) {
+            if (storedTheme === 'light') {
                 document.body.classList.add('light-mode');
                 const themeBtn = document.getElementById('theme-toggle');
                 if (themeBtn) {
                     themeBtn.textContent = 'Dark Mode';
+                }
+            } else {
+                document.body.classList.remove('light-mode');
+                const themeBtn = document.getElementById('theme-toggle');
+                if (themeBtn) {
+                    themeBtn.textContent = 'Light Mode';
                 }
             }
 
@@ -17758,11 +17809,6 @@
                 bookButtons.appendChild(allBtn);
                 
                 for (let i = 1; i <= numBooks; i++) {
-                    const separator = document.createElement('span');
-                    separator.textContent = " \u00b7 ";
-                    separator.style.color = 'var(--text-muted)';
-                    bookButtons.appendChild(separator);
-
                     const btn = document.createElement('span');
                     btn.className = 'book-opt';
                     btn.textContent = `${i}`;
