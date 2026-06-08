@@ -17584,13 +17584,18 @@
                 const isBookmarked = bookmarks.includes(item.id);
                 const bookmarkClass = isBookmarked ? 'action-item bookmarked' : 'action-item';
                 
-                let metaText = `${item.author} ${String.fromCharCode(183)} ${item.sourceTitle}`;
+                let metaText = '';
                 if (item.source === 'meditations') {
-                    metaText += ` Book ${item.book}, Section ${item.section}`;
-                } else if (item.source === 'discourses') {
-                    metaText += ` Book ${item.book}, ${item.section}`;
-                } else if (item.source === 'enchiridion') {
-                    metaText += ` ${item.section}`;
+                    const sectionParts = String(item.section).split('.');
+                    const sectionNum = sectionParts.length > 1 ? sectionParts[1] : item.section;
+                    metaText = `${item.author} ${String.fromCharCode(183)} MEDITATIONS ${item.book}.${String(sectionNum).padStart(2, '0')}`;
+                } else {
+                    metaText = `${item.author} ${String.fromCharCode(183)} ${item.sourceTitle}`;
+                    if (item.source === 'discourses') {
+                        metaText += ` Book ${item.book}, ${item.section}`;
+                    } else if (item.source === 'enchiridion') {
+                        metaText += ` ${item.section}`;
+                    }
                 }
 
                 const titleHtml = item.title && !item.title.startsWith('Chapter') 
