@@ -347,31 +347,30 @@
             margin-bottom: 16px;
         }
 
-        .entry-text.threaded p::before {
-            content: '';
+        .thread-node {
             position: absolute;
             left: -26px; /* Centered on the 1.5px border line */
             top: 6px;
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background: var(--bg-color); /* Matches pure black body bg to mask line */
+            background: var(--bg-color); /* Matches body bg to mask line */
             border: 2px solid var(--text-muted);
             box-sizing: border-box;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, background-color 0.2s, transform 0.1s;
+            cursor: pointer;
+            z-index: 10;
         }
 
-        .entry-text.threaded p:hover::before {
+        .thread-node:hover {
             border-color: var(--accent);
+            background-color: var(--text-muted);
+            transform: scale(1.2);
         }
 
-        /* Collapsible thread styling */
-        .thread-replies {
-            display: none;
-        }
-
-        .thread-replies.show {
-            display: block;
+        .thread-node.collapsed-node {
+            background-color: var(--accent);
+            border-color: var(--accent);
         }
 
         .thread-expand-btn {
@@ -17441,7 +17440,7 @@
         
         let bookmarks = [];
         let shuffledEntries = [];
-        let expandedThreads = new Set();
+        let threadVisibleCounts = {};
 
         const streamContainer = document.getElementById('stream-container');
         const bookSelector = document.getElementById('book-selector');
@@ -17580,6 +17579,7 @@
                 const item = items[idx];
                 const entryEl = document.createElement('article');
                 entryEl.className = 'entry';
+                entryEl.id = `entry-${item.id}`;
                 
                 const isBookmarked = bookmarks.includes(item.id);
                 const bookmarkClass = isBookmarked ? 'action-item bookmarked' : 'action-item';
@@ -17589,13 +17589,14 @@
                     const sectionParts = String(item.section).split('.');
                     const sectionNum = sectionParts.length > 1 ? sectionParts[1] : item.section;
                     metaText = `${item.author} ${String.fromCharCode(183)} MEDITATIONS ${item.book}.${String(sectionNum).padStart(2, '0')}`;
-                } else {
-                    metaText = `${item.author} ${String.fromCharCode(183)} ${item.sourceTitle}`;
-                    if (item.source === 'discourses') {
-                        metaText += ` Book ${item.book}, ${item.section}`;
-                    } else if (item.source === 'enchiridion') {
-                        metaText += ` ${item.section}`;
-                    }
+                } else if (item.source === 'discourses') {
+                    const sectionClean = String(item.section).replace('Chapter ', '').trim();
+                    const sectionParts = sectionClean.split('.');
+                    const sectionNum = sectionParts.length > 1 ? sectionParts[1] : sectionClean;
+                    metaText = `${item.author} ${String.fromCharCode(183)} DISCOURSES ${item.book}.${String(sectionNum).padStart(2, '0')}`;
+                } else if (item.source === 'enchiridion') {
+                    const sectionNum = String(item.section).replace('Chapter ', '').trim();
+                    metaText = `${item.author} ${String.fromCharCode(183)} ENCHIRIDION ${String(sectionNum).padStart(2, '0')}`;
                 }
 
                 const titleHtml = item.title && !item.title.startsWith('Chapter') 
@@ -17603,24 +17604,28 @@
                     : '';
 
                 const isThreaded = item.paragraphs.length > 1;
-                const isExpanded = expandedThreads.has(item.id);
                 const textClass = isThreaded ? 'entry-text threaded' : 'entry-text';
 
                 let pContainerHtml = '';
                 let expandBtnHtml = '';
 
                 if (isThreaded) {
-                    const firstP = item.paragraphs[0].html;
-                    const remainingP = item.paragraphs.slice(1).map(p => p.html).join('');
-                    pContainerHtml = `
-                        ${firstP}
-                        <div class="thread-replies ${isExpanded ? 'show' : ''}" id="replies-${item.id}">
-                            ${remainingP}
-                        </div>
-                    `;
+                    const visibleCount = threadVisibleCounts[item.id] !== undefined ? threadVisibleCounts[item.id] : 1;
+                    pContainerHtml = item.paragraphs.map((p, pIdx) => {
+                        const isVisible = pIdx < visibleCount;
+                        const pStyle = isVisible ? '' : ' style="display: none;"';
+                        
+                        const isCollapsePoint = (visibleCount > 1) && (pIdx === visibleCount - 1) && (visibleCount < item.paragraphs.length);
+                        const nodeClass = isCollapsePoint ? 'thread-node collapsed-node' : 'thread-node';
+                        const nodeTitle = isCollapsePoint ? 'Expand thread' : 'Collapse thread from here';
+
+                        return p.html.replace('<p>', `<p${pStyle}><span class="${nodeClass}" onclick="toggleThread('${item.id}', ${pIdx})" title="${nodeTitle}"></span>`);
+                    }).join('');
+
+                    const hasCollapsedParts = visibleCount < item.paragraphs.length;
                     expandBtnHtml = `
-                        <span class="thread-expand-btn" id="expand-btn-${item.id}" onclick="toggleThread('${item.id}')">
-                            ${isExpanded ? 'Collapse thread' : `Show full thread (${item.paragraphs.length - 1} parts)`}
+                        <span class="thread-expand-btn" id="expand-btn-${item.id}" onclick="toggleThread('${item.id}', ${hasCollapsedParts ? -1 : 0})">
+                            ${hasCollapsedParts ? `Show full thread (${item.paragraphs.length - visibleCount} parts)` : 'Collapse thread'}
                         </span>
                     `;
                 } else {
@@ -17662,21 +17667,64 @@
             }
         }
 
-        window.toggleThread = function(id) {
-            const repliesEl = document.getElementById('replies-' + id);
-            const btnEl = document.getElementById('expand-btn-' + id);
+        function updateThreadDOM(id) {
+            const entryEl = document.getElementById('entry-' + id);
             const entry = database.entries.find(e => e.id === id);
-            if (!repliesEl || !btnEl || !entry) return;
+            if (!entryEl || !entry) return;
 
-            if (expandedThreads.has(id)) {
-                expandedThreads.delete(id);
-                repliesEl.classList.remove('show');
-                btnEl.textContent = 'Show full thread (' + (entry.paragraphs.length - 1) + ' parts)';
-            } else {
-                expandedThreads.add(id);
-                repliesEl.classList.add('show');
-                btnEl.textContent = 'Collapse thread';
+            const visibleCount = threadVisibleCounts[id] !== undefined ? threadVisibleCounts[id] : 1;
+            const pElements = entryEl.querySelectorAll('.entry-text.threaded p');
+            const btnEl = document.getElementById('expand-btn-' + id);
+
+            pElements.forEach((pEl, pIdx) => {
+                const isVisible = pIdx < visibleCount;
+                pEl.style.display = isVisible ? '' : 'none';
+
+                const nodeEl = pEl.querySelector('.thread-node');
+                if (nodeEl) {
+                    const isCollapsePoint = (visibleCount > 1) && (pIdx === visibleCount - 1) && (visibleCount < entry.paragraphs.length);
+                    if (isCollapsePoint) {
+                        nodeEl.classList.add('collapsed-node');
+                        nodeEl.title = 'Expand thread';
+                    } else {
+                        nodeEl.classList.remove('collapsed-node');
+                        nodeEl.title = 'Collapse thread from here';
+                    }
+                }
+            });
+
+            if (btnEl) {
+                const hasCollapsedParts = visibleCount < entry.paragraphs.length;
+                btnEl.textContent = hasCollapsedParts 
+                    ? `Show full thread (${entry.paragraphs.length - visibleCount} parts)` 
+                    : 'Collapse thread';
+                btnEl.setAttribute('onclick', `toggleThread('${id}', ${hasCollapsedParts ? -1 : 0})`);
             }
+        }
+
+        window.toggleThread = function(id, pIdx) {
+            const entry = database.entries.find(e => e.id === id);
+            if (!entry) return;
+
+            const N = Number(entry.paragraphs.length);
+            const currentVal = Number(threadVisibleCounts[id] !== undefined ? threadVisibleCounts[id] : 1);
+            pIdx = Number(pIdx);
+
+            if (pIdx === -1) {
+                threadVisibleCounts[id] = N;
+            } else if (pIdx === 0 && currentVal === N) {
+                threadVisibleCounts[id] = 1;
+            } else if (pIdx === N - 1 && currentVal === N) {
+                threadVisibleCounts[id] = 1;
+            } else {
+                if (currentVal > pIdx + 1) {
+                    threadVisibleCounts[id] = pIdx + 1;
+                } else {
+                    threadVisibleCounts[id] = N;
+                }
+            }
+
+            updateThreadDOM(id);
         };
 
         window.toggleBookmark = function(id, el) {
